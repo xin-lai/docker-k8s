@@ -1,0 +1,73 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    qcloud-app: ncloud-filemanager
+  name: ncloud-filemanager
+  namespace: default
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      qcloud-app: ncloud-filemanager
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        qcloud-app: ncloud-filemanager
+    spec:
+      containers:
+      - image: filebrowser/filebrowser
+        imagePullPolicy: Always
+        name: ncloud-filemanager
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1Gi
+          requests:
+            cpu: 250m
+            memory: 256Mi
+        securityContext:
+          privileged: false
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /srv
+          name: data
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: data
+        nfs:
+          path: /
+          server: 172.16.16.10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    qcloud-app: ncloud-filemanager
+  name: ncloud-filemanager
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - name: tcp-80-80
+    nodePort: 30700
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    qcloud-app: ncloud-filemanager
+  sessionAffinity: None
+  type: NodePort
+status:
+  loadBalancer: {}
+

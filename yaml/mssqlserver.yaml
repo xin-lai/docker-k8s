@@ -1,0 +1,63 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: mssql
+  name: mssql #当前Deployment对象名称，同一个命名空间下必须唯一
+spec:
+  replicas: 1 #副本集数量
+  revisionHistoryLimit: 2 #保留的历史记录数，设置为0将清理部署的所有历史记录，无法回滚
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mssql
+    spec:
+      containers:
+      - env:  #环境变量设置
+        - name: ACCEPT_EULA
+          value: "Y"
+        - name: SA_PASSWORD #sa密码设置
+          value: 123456abcD
+        image: mcr.microsoft.com/mssql/server:2017-latest-ubuntu #镜像
+        imagePullPolicy: IfNotPresent
+        name: mssql
+        ports:
+          - containerPort: 1433 #容器端口，SQLServer数据库默认端口为1433
+        resources:  #资源限制
+          limits:
+            cpu: "2"
+            memory: 2096Mi
+          requests:
+            cpu: 100m
+            memory: 827Mi
+        volumeMounts:
+        - mountPath: /var/opt/mssql/
+          name: data-vol
+      restartPolicy: Always
+      nodeName: k8s-node1 #强制约束将Pod调度到指定的Node节点上
+      terminationGracePeriodSeconds: 30 #Pod结束时等待时长（单位为秒）
+      volumes:
+        - name: data-vol
+          hostPath:   #使用主机目录
+            path: /var/mssql
+      hostNetwork: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: mssql
+  name: mssql #服务名称
+spec:
+  ports:
+  - name: tcp-1433-1433
+    nodePort: 30338 #节点端口，注意默认的端口范围为“30000-32767”，注意不要冲突
+    port: 1433  #端口
+    protocol: TCP
+    targetPort: 1433 #目标端口
+  selector: #Pod标签选择器
+    app: mssql
+  sessionAffinity: None
+  type: NodePort #服务类型，这里是负载均衡类型

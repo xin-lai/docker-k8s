@@ -1,0 +1,19 @@
+apiVersion: apps/v1 #API对象版本，可通过“kubectl api-versions”命令查看
+kind: Deployment #资源类型，区分大小写，可通过“kubectl api-resources”命令查看，这里使用Deployment对象
+metadata: #标准的元数据
+  name: demo-deployment  #当前Deployment对象名称，同一个命名空间下必须唯一
+spec: #部署规范（目标），Deployment控制器会根据此模板调整当前Pod到最终的期望状态
+  replicas: 5  # Pod数量，这里指运行5个Pod
+  selector: #选择器，其定义了Deployment控制器如何找到要管理的Pod
+    matchLabels:  #匹配标签
+      app: demo   #待匹配的标签键值对
+  template:   # Pod模板定义
+    metadata: #标准的元数据
+      labels: #Pod标签
+        app: demo #定义Pod标签，由键值对组成
+    spec: #Pod规范
+      containers: #容器列表，Pod中至少有一个容器
+      - name: demo  #容器名称
+        image: microsoft/dotnet-samples:aspnetapp #镜像地址
+        ports:  #端口列表
+        - containerPort: 80 #设置容器端口

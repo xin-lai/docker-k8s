@@ -1,0 +1,6 @@
+#镜像版本见：https://hub.docker.com/_/php
+FROM php:7.3-cli-alpine3.9
+COPY . /usr/src/myapp
+WORKDIR /usr/src/myapp
+#运行php脚本
+CMD [ "php", "./test.php" ]

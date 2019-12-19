@@ -1,0 +1,26 @@
+#制定node镜像的版本
+FROM node:8.9-alpine
+
+RUN apk update && apk upgrade && \
+    apk add --no-cache bash git openssh openssl
+
+#安装依赖
+RUN npm install -g hexo-cli
+
+#对外暴露的端口
+EXPOSE 8000
+
+VOLUME ["/opt/website"]
+
+
+
+ADD . /app
+WORKDIR /app
+
+ARG GitUrl="https://github.com/magicodes/docs.git"
+RUN git clone ${GitUrl}
+RUN cd docs/src && npm install hexo --save && hexo generate && npm install hexo-server --save
+WORKDIR /app/docs/src
+ENTRYPOINT ["hexo", "server","-p","8000"]
+# COPY . .
+# CMD ["node","cmd.js"]

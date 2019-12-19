@@ -1,0 +1,13 @@
+﻿version: '3.4'
+
+services:
+  dingtalk.net:
+    image: ${DOCKER_REGISTRY-}dingtalknet
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      WEBHOOK: 'https://oapi.dingtalk.com/robot/send?access_token=40eb535b2ff6baee6db2f4b76a1a35d5852a3ac9c2d8cfb8e4e7c35219476df2'
+      MESSAGE: '*使用.NET Core发送钉钉消息。*'
+      IS_AT_ALL: 'true'
+      MSG_TYPE: 'markdown'

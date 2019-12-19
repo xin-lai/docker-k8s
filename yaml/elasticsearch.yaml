@@ -1,0 +1,69 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: elasticsearch
+  name: elasticsearch #当前Deployment对象名称，同一个命名空间下必须唯一
+spec:
+  replicas: 1 #副本集数量
+  revisionHistoryLimit: 2 #保留的历史记录数，设置为0将清理部署的所有历史记录，无法回滚
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      containers:
+      - env:  #环境变量设置
+        - name: discovery.type
+          value: single-node #单个节点
+        - name: cluster.name
+          value: exceptionless
+        - name: bootstrap.memory_lock
+          value: 'true'
+        - name: ES_JAVA_OPTS
+          value: '-Xms512m -Xmx512m'
+        - name: xpack.security.enabled
+          value: 'false'
+        - name: xpack.graph.enabled
+          value: 'false'
+        - name: xpack.watcher.enabled
+          value: 'false'
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.4.2 #镜像
+        imagePullPolicy: Always
+        name: elasticsearch
+        ports:
+          - containerPort: 9200 #容器端口
+          - containerPort: 9300 #容器端口
+        resources:  #资源限制
+          limits:
+            cpu: "2"
+            memory: 2096Mi
+          requests:
+            cpu: 100m
+            memory: 827Mi
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: elasticsearch
+  name: elasticsearch #服务名称
+spec:
+  ports:
+  - name: tcp-9200-9200
+    nodePort: 30200 #节点端口，注意默认的端口范围为“30000-32767”，注意不要冲突
+    port: 9200  #端口
+    protocol: TCP
+    targetPort: 9200 #目标端口
+  - name: tcp-9300-9300
+    nodePort: 30201 #节点端口，注意默认的端口范围为“30000-32767”，注意不要冲突
+    port: 9300  #端口
+    protocol: TCP
+    targetPort: 9300 #目标端口
+  selector: #Pod标签选择器
+    app: elasticsearch
+  sessionAffinity: None
+  type: NodePort #服务类型，这里是负载均衡类型

@@ -1,0 +1,57 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: jenkins
+  name: jenkins
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2 #保留的历史记录数，设置为0将清理部署的所有历史记录，无法回滚
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: jenkins
+    spec:
+      hostname: jenkins
+      containers:
+        - image: jenkins/jenkins:lts
+          name: jenkins
+          ports:
+            - containerPort: 8080
+            - containerPort: 5000
+          resources: #设置资源限制
+              limits: #最大使用限制
+                cpu: "1"  #CPU限制
+                memory: 2096Mi  #内存限制
+              requests: #分配额度
+                cpu: 500m #CPU
+                memory: 827Mi #内存
+          volumeMounts:
+          - mountPath: /var/jenkins/home
+            name: data-vol
+      restartPolicy: Always
+      hostNetwork: true
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: data-vol
+          hostPath:   #使用主机目录
+            path: /var/jenkins/home
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: jenkins
+  name: jenkins
+spec:
+  ports:
+  - nodePort: 32767
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: jenkins
+  sessionAffinity: None
+  type: LoadBalancer

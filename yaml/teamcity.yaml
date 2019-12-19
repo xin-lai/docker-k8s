@@ -1,0 +1,57 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: teamcity
+  name: teamcity
+spec:
+  replicas: 1 #实例数量
+  revisionHistoryLimit: 2 #保留的历史记录数，设置为0将清理部署的所有历史记录，无法回滚
+  strategy:
+    type: Recreate   #更新策略为快速更新，即关闭所有实例重新创建
+  template: #pod模板
+    metadata:
+      labels:
+        app: teamcity
+    spec:
+      containers:
+      - image: jetbrains/teamcity-server  #镜像
+        imagePullPolicy: IfNotPresent  #拉取策略
+        name: teamcity
+        ports:  #端口列表
+          - containerPort: 8111  #端口
+        resources:
+          limits:
+            cpu: 1000m #最大CPU，这里为1核
+            memory: 4184Mi  #最大内存
+          requests:
+            cpu: 97m  #预分配CPU，这里为0.097核
+            memory: 2092Mi #预分配内存
+        volumeMounts:
+        - mountPath: /data/teamcity_server/datadir
+          name: data-vol
+        - mountPath: /opt/teamcity/logs
+          name: log-vol
+      nodeName: k8s-node1 #强制约束将Pod调度到指定的Node节点上
+      restartPolicy: Always #重启策略
+      terminationGracePeriodSeconds: 30 #删除需要时间
+      volumes:
+      - name: data-vol
+        hostPath:   #使用主机目录
+          path: /var/teamcity
+      - name: log-vol
+        emptyDir: {} #临时目录
+      hostNetwork: true
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: teamcity-service
+spec:
+  type: NodePort #通过节点端口提供对外访问
+  ports:
+    - port: 8111
+      nodePort: 30001
+  selector:
+    app: teamcity
+

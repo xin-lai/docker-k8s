@@ -1,0 +1,53 @@
+# 定义k8sapp的默认配置
+fullnameOverride: k8sapp
+replicaCount: 1 #副本数
+image: #镜像配置
+  repository: ccr.ccs.tencentyun.com/magicodes/k8sapp
+  tag: stable
+  pullPolicy: Always #镜像拉取策略，Always表示总是拉取最新镜像，IfNotPresent表示如果本地存在则不拉取，Never则表示只使用本地镜像
+service:
+  type: NodePort #NodePort服务类型，以便外部访问
+  port: 80
+
+probes: #livenessProbe
+  enabled: false
+
+ingress:
+  enabled: false
+  annotations:
+    # kubernetes.io/tls-acme: "true"
+  path: /
+  # hosts:
+  #   - chart-example.local
+  tls: []
+    # - secretName: chart-example-tls
+    #   hosts:
+    #     - chart-example.local
+secrets: {}
+  # Optionally specify a set of secret objects whose values
+  # will be injected as environment variables by default.
+  # You should add this section to a file like secrets.yaml
+  # that is explicitly NOT committed to source code control
+  # and then include it as part of your helm install step.
+  # ref: https://kubernetes.io/docs/concepts/configuration/secret/
+  #
+  # This creates a secret "mysecret" and injects "mypassword"
+  # as the environment variable mysecret_mypassword=password.
+  # mysecret:
+  #   mypassword: password
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

@@ -1,0 +1,85 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    k8s-app: nexus
+  name: nexus
+  namespace: default
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      k8s-app: nexus
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        k8s-app: nexus
+    spec:
+      containers:
+      - image: sonatype/nexus3
+        imagePullPolicy: IfNotPresent
+        name: nexus
+        resources:
+          limits:
+            cpu: "2"
+            memory: 5024Mi
+          requests:
+            cpu: 10m
+            memory: 256Mi
+        volumeMounts:
+        - mountPath: /nexus-data
+          name: data
+      restartPolicy: Always
+      nodeName: k8s-node1 #强制约束将Pod调度到指定的Node节点上
+      terminationGracePeriodSeconds: 30 #Pod结束时等待时长（单位为秒）
+      volumes:
+        - name: data
+          hostPath:   #使用主机目录
+            path: /var/nexus
+      hostNetwork: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus
+  namespace: default
+spec:
+  ports:
+  - name: tcp-8081-8081
+    nodePort: 30081
+    port: 8081
+    protocol: TCP
+    targetPort: 8081
+  - name: tcp-8082-8082
+    nodePort: 30082
+    port: 8082
+    protocol: TCP
+    targetPort: 8082
+  - name: tcp-8083-8083
+    nodePort: 30083
+    port: 8083
+    protocol: TCP
+    targetPort: 8083
+  - name: tcp-8084-8084
+    nodePort: 30084
+    port: 8084
+    protocol: TCP
+    targetPort: 8084
+  - name: tcp-8085-8085
+    nodePort: 30085
+    port: 8085
+    protocol: TCP
+    targetPort: 8085
+  - name: tcp-8086-8086
+    nodePort: 30086
+    port: 8086
+    protocol: TCP
+    targetPort: 8086
+  selector:
+    k8s-app: nexus
+  sessionAffinity: None
+  type: NodePort

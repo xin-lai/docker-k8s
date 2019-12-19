@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service #资源类型
+metadata: #标准元数据
+  name: demo-service #服务名称
+spec: #规范定义
+  type: ClusterIP #服务类型，不填写此字段则默认为ClusterIP类型，也就是集群IP类型
+  selector: #标签选择器
+    app: demo #标签
+  ports:  #端口
+  - protocol: TCP #协议，能够支持TCP和UDP
+    port: 80  #当前端口
+    targetPort: 80 #目标端口

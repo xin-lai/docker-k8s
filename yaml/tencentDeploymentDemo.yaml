@@ -1,0 +1,44 @@
+apiVersion: apps/v1beta2  #api版本
+kind: Deployment #使用部署对象
+metadata: #标准元数据
+  labels: #标签列表
+    app: demo
+    k8s-app: demo
+    qcloud-app: demo
+  name: demo
+  namespace: default #命名空间
+spec: #规范
+  replicas: 2 #副本数
+  revisionHistoryLimit: 10  #部署版本历史记录，这里指定最多10个
+  selector: #选择器
+    matchLabels:
+      app: demo
+      k8s-app: demo
+      qcloud-app: demo
+  strategy: #更新策略
+    rollingUpdate:  #滚动更新配置
+      maxSurge: 25% #可以为整数或者百分比，更新时允许最大激增的容器数。如果为百分比则向上取整数。
+      maxUnavailable: 25% #更新时允许最大的不可用容器数，如果为百分比则向下取整数。
+    type: RollingUpdate #使用滚动更新
+  template:
+    metadata:
+      labels:
+        app: demo
+        k8s-app: demo
+        qcloud-app: demo
+    spec:
+      containers:
+      - image: microsoft/dotnet-samples:aspnetapp
+        imagePullPolicy: IfNotPresent
+        name: demo
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: qcloudregistrykey
+      - name: tencenthubkey
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30

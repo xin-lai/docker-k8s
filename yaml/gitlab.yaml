@@ -1,0 +1,94 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: gitlab
+  name: gitlab
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2 #保留的历史记录数，设置为0将清理部署的所有历史记录，无法回滚
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: gitlab
+    spec:
+      hostname: gitlab
+      containers:
+        - image: caeret/gitlab-ce-zh:12.0.3
+          imagePullPolicy: Always
+          name: gitlab
+          ports:
+            - containerPort: 443
+            - containerPort: 80
+            - containerPort: 22
+          env:
+            - name: TZ
+              value: 'Asia/Shanghai'
+            - name: GITLAB_OMNIBUS_CONFIG
+              value: |
+                    external_url 'http://localhost:8080'
+                    nginx['listen_port'] = 80
+                    gitlab_rails['time_zone'] = 'Asia/Shanghai'
+
+          # 比如下面的电子邮件的配置：
+          # gitlab_rails['smtp_enable'] = true
+          # gitlab_rails['smtp_address'] = "smtp.exmail.qq.com"
+          # gitlab_rails['smtp_port'] = 465
+          # gitlab_rails['smtp_user_name'] = "xxxx@xx.com"
+          # gitlab_rails['smtp_password'] = "password"
+          # gitlab_rails['smtp_authentication'] = "login"
+          # gitlab_rails['smtp_enable_starttls_auto'] = true
+          # gitlab_rails['smtp_tls'] = true
+          # gitlab_rails['gitlab_email_from'] = 'xxxx@xx.com'
+          resources: #设置资源限制
+              limits: #最大使用限制
+                cpu: "1"  #CPU限制
+                memory: 2096Mi  #内存限制
+              requests: #分配额度
+                cpu: 100m #CPU
+                memory: 827Mi #内存
+          volumeMounts:
+          - mountPath: /etc/gitlab
+            name: data-vol
+          - mountPath: /var/log/gitlab
+            name: log-vol
+          - mountPath: /var/opt/gitlab
+            name: opt-vol
+      restartPolicy: Always
+      hostNetwork: true
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: data-vol
+          hostPath:   #使用主机目录
+            path: /var/gitlab/data
+        - name: log-vol
+          hostPath:   #使用主机目录
+            path: /var/gitlab/log
+        - name: opt-vol
+          hostPath:   #使用主机目录
+            path: /var/gitlab/opt
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: gitlab
+  name: gitlab
+spec:
+  ports:
+  - name: tcp-80-80
+    nodePort: 30339
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  - name: tcp-22-22
+    nodePort: 30340
+    port: 22
+    protocol: TCP
+    targetPort: 22
+  selector:
+    app: gitlab
+  sessionAffinity: None
+  type: LoadBalancer

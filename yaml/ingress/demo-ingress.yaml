@@ -1,0 +1,165 @@
+apiVersion: apps/v1beta2 #api版本
+kind: Deployment #使用部署对象
+metadata:
+  labels: #标签列表
+    app: apidemo1
+  name: apidemo1 #部署名称
+  namespace: default #命名空间
+spec:
+  replicas: 1 #副本数
+  selector: #选择器
+    matchLabels:
+      app: apidemo1
+  template: #Pod模板
+    metadata:
+      labels:
+        app: apidemo1
+    spec:
+      containers: #容器列表
+      - env: #环境变量设置
+        - name: PATH
+          value: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        - name: ASPNETCORE_URLS
+          value: http://+:80
+        - name: DOTNET_RUNNING_IN_CONTAINER
+          value: "true"
+        - name: ASPNETCORE_VERSION
+          value: 2.2.6
+        image: ccr.ccs.tencentyun.com/magicodes/apidemo1:latest #镜像地址
+        imagePullPolicy: Always #镜像拉取策略，Always表示总是拉取最新镜像，IfNotPresent表示如果本地存在则不拉取，Never则表示只使用本地镜像
+        name: apidemo1  #容器名称
+        resources:  #资源限制
+          limits: #最高限制
+            cpu: 500m
+            memory: 256Mi
+          requests: #预分配
+            cpu: 250m
+            memory: 64Mi
+        workingDir: /app  #工作目录
+      dnsPolicy: ClusterFirst #DNS策略
+      restartPolicy: Always #重启策略
+      terminationGracePeriodSeconds: 30 #删除需要时间
+---
+apiVersion: apps/v1beta2 #api版本
+kind: Deployment #使用部署对象
+metadata:
+  labels: #标签列表
+    app: apidemo2
+  name: apidemo2 #部署名称
+  namespace: default #命名空间
+spec:
+  replicas: 1 #副本数
+  selector: #选择器
+    matchLabels:
+      app: apidemo2
+  template: #Pod模板
+    metadata:
+      labels:
+        app: apidemo2
+    spec:
+      containers: #容器列表
+      - env: #环境变量设置
+        - name: PATH
+          value: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        - name: ASPNETCORE_URLS
+          value: http://+:80
+        - name: DOTNET_RUNNING_IN_CONTAINER
+          value: "true"
+        - name: ASPNETCORE_VERSION
+          value: 2.2.6
+        image: ccr.ccs.tencentyun.com/magicodes/apidemo2:latest #镜像地址
+        imagePullPolicy: Always #镜像拉取策略，Always表示总是拉取最新镜像，IfNotPresent表示如果本地存在则不拉取，Never则表示只使用本地镜像
+        name: apidemo2  #容器名称
+        resources:  #资源限制
+          limits: #最高限制
+            cpu: 500m
+            memory: 256Mi
+          requests: #预分配
+            cpu: 250m
+            memory: 64Mi
+        workingDir: /app  #工作目录
+      dnsPolicy: ClusterFirst #DNS策略
+      restartPolicy: Always #重启策略
+      terminationGracePeriodSeconds: 30 #删除需要时间
+---
+apiVersion: v1
+kind: Service #资源类型
+metadata:
+  name: apidemo1  #服务名称
+  namespace: default
+spec:
+  ports: #端口列表
+  - name: tcp-80-80
+    nodePort: 31010 #节点端口
+    port: 80  #当前端口
+    protocol: TCP #协议
+    targetPort: 80  #目标端口
+  selector: #标签选择器
+    app: apidemo1
+  type: NodePort  #NodePort 类型的Service
+---
+apiVersion: v1
+kind: Service #资源类型
+metadata:
+  name: apidemo2  #服务名称
+  namespace: default
+spec:
+  ports: #端口列表
+  - name: tcp-80-80
+    nodePort: 31011 #节点端口
+    port: 80  #当前端口
+    protocol: TCP #协议
+    targetPort: 80  #目标端口
+  selector: #标签选择器
+    app: apidemo2
+  type: NodePort  #NodePort 类型的Service
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: qcloud #注释,不同的Ingress控制器支持不同的注释
+  name: demo-ip
+  namespace: default
+spec:
+  rules: #规则列表
+  - http: #HTTP规则
+      paths: #路径列表
+      - backend: #后端配置
+          serviceName: apidemo1 #后端服务名称
+          servicePort: 80 #服务端口
+        path: /api/demo1 #路径，同一个域名路径需不同
+  - http:
+      paths:
+      - backend:
+          serviceName: apidemo2 #后端服务名称
+          servicePort: 80 #服务端口
+        path: /api/demo2  #路径，同一个域名路径需不同
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: qcloud #注释,不同的Ingress控制器支持不同的注释
+    kubernetes.io/ingress.http-rules: '[{"host":"demo.xin-lai.com","path":"/api/demo1","backend":{"serviceName":"apidemo1","servicePort":80}},{"host":"demo.xin-lai.com","path":"/api/demo2","backend":{"serviceName":"apidemo2","servicePort":80}}]' #HTTP转发规则
+    kubernetes.io/ingress.https-rules: "null"
+    kubernetes.io/ingress.rule-mix: "true"
+    random: "7778255514276773869"
+  name: demo
+  namespace: default
+spec:
+  rules: #规则列表
+  - host: demo.xin-lai.com #主机名，可选。如不填写，则使用IP地址。
+    http: #HTTP规则
+      paths: #路径列表
+      - backend: #后端配置
+          serviceName: apidemo1 #后端服务名称
+          servicePort: 80 #服务端口
+        path: /api/demo1 #路径，同一个域名路径需不同
+  - host: demo.xin-lai.com #主机名，可选。如不填写，则使用IP地址。
+    http:
+      paths:
+      - backend:
+          serviceName: apidemo2 #后端服务名称
+          servicePort: 80 #服务端口
+        path: /api/demo2  #路径，同一个域名路径需不同

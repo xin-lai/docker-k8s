@@ -1,0 +1,46 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: elasticsearch
+  name: elasticsearch #当前Deployment对象名称，同一个命名空间下必须唯一
+spec:
+  replicas: 1 #副本集数量
+  revisionHistoryLimit: 2 #保留的历史记录数，设置为0将清理部署的所有历史记录，无法回滚
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      containers:
+      - env:  #环境变量设置
+        - name: discovery.type
+          value: single-node #单个节点
+        - name: cluster.name
+          value: exceptionless
+        - name: bootstrap.memory_lock
+          value: 'true'
+        - name: ES_JAVA_OPTS
+          value: '-Xms512m -Xmx512m'
+        - name: xpack.security.enabled
+          value: 'false'
+        - name: xpack.graph.enabled
+          value: 'false'
+        - name: xpack.watcher.enabled
+          value: 'false'
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.4.2 #镜像
+        imagePullPolicy: Always
+        name: elasticsearch
+        ports:
+          - containerPort: 9200 #容器端口
+          - containerPort: 9300 #容器端口
+        resources:  #资源限制
+          limits:
+            cpu: "2"
+            memory: 2096Mi
+          requests:
+            cpu: 100m
+            memory: 827Mi
+      restartPolicy: Always

@@ -1,0 +1,11 @@
+kind: Service #资源类型
+apiVersion: v1
+metadata: #标准元数据
+  name: nodeport-service  #服务名称
+spec:  #规范定义
+  type: NodePort #服务类型，这里是节点端口
+  ports:  #端口列表
+    - port: 80  #Pod端口
+      nodePort: 31001 #节点端口，注意默认的端口范围为“30000-32767”，注意不要冲突
+  selector: #标签选择器
+    app: demo

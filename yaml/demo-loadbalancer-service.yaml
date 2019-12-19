@@ -1,0 +1,19 @@
+apiVersion: v1  #api版本
+kind: Service #Service
+metadata: #标准元数据
+  name: demo  #名称
+  namespace: default #命名空间
+spec: #规范
+  clusterIP: 10.3.255.28 #集群IP
+  loadBalancerIP: 106.52.99.55 #负载均衡IP
+  ports:  #端口列表
+  - name: tcp-80-80
+    nodePort: 31504 #节点IP
+    port: 80 #Pod端口
+    protocol: TCP #协议
+    targetPort: 80 #服务端口
+  selector: #选择器
+    app: demo
+    k8s-app: demo
+    qcloud-app: demo
+  type: LoadBalancer #服务类型，这里为负载均衡服务类型

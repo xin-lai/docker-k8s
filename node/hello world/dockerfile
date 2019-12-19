@@ -1,0 +1,11 @@
+#指定node镜像的版本
+FROM node:8.9-alpine
+
+#对外暴露的端口
+EXPOSE 80
+
+# 复制文件
+COPY . .
+
+# 运行
+ENTRYPOINT ["node","app.js"]
